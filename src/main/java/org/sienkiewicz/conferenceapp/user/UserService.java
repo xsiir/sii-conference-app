@@ -1,7 +1,10 @@
 package org.sienkiewicz.conferenceapp.user;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
+import org.sienkiewicz.conferenceapp.scheduler.Lecture;
 import org.sienkiewicz.conferenceapp.scheduler.PlanElement;
 import org.sienkiewicz.conferenceapp.scheduler.SchedulerFacade;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +44,9 @@ class UserService {
 	}
 	
 	private boolean assignLectureToParticipant(User user, Long lectureId) {
-		boolean isSuccesful = user.getLectures().add(lectureId);
+		boolean isSuccesful = user.addLecture(lectureId);
+		userRepository.save(user);
+		loggedUser.setLectures(user.getLectures());
 		return isSuccesful;
 	}
 
@@ -64,18 +69,24 @@ class UserService {
 		return ifCompatible;
 	}
 	
-	public void getId(PlanElement elem) {
-		System.out.println(elem.getTitle());
-	}
-	
-	public void login(String login) {
+	void login(String login) {
 		userRepository.findByLogin(login).ifPresent(u-> {
 			this.loggedUser.setId(u.getId());
 			this.loggedUser.setEmail(u.getEmail());
 			this.loggedUser.setLogin(u.getLogin());
+			this.loggedUser.setLectures(u.getLectures());
 		});
 	}
 	
-	
+	List<Lecture> getLoggedUserLectures(){
+		List<Lecture> lectureList = new ArrayList<>();
+		
+		List<Long> lectureIdList = loggedUser.getLectures();
+		lectureIdList.forEach(id -> {
+			schedulerFacade.getLectureById(id).ifPresent(lecture -> lectureList.add(lecture));
+		});
+		
+		return lectureList;
+	}
 	
 }

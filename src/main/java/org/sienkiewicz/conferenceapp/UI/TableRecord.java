@@ -22,7 +22,7 @@ public class TableRecord {
 	 * Method which is responsible for create suitable component 
 	 * depending on type of implementation of sent interface.
 	 * Every single type will contain duration and title, but if element is instance of Lecture
-	 * it will contains labels as speaker, remaining seats or button to save new participant. 
+	 * it will contains labels as speaker, remaining seats. 
 	 * @param element - Interface that point to type of schedule element. 
 	 * @return VertialLayout created depending on type of implementation of sent interface
 	 */
@@ -55,8 +55,8 @@ public class TableRecord {
 	}
 	
 	/**
-	 * If element is a instance of Lecture method adds to component as information as speaker,
-	 * remaining seats and button to add new participant.
+	 * If element is a instance of Lecture method adds to component as information as speaker
+	 * and remaining seats
 	 * 
 	 * @param layout - should be a main layout of tile
 	 * @param element - interface which allow to pull information about plan element
@@ -65,9 +65,7 @@ public class TableRecord {
 		Lecture lecture = (Lecture) element;
 		Label speaker = new Label(lecture.getSpeaker());
 		Label remainingSeats = new Label(lecture.getOcuppiedSeats() + "/" + lecture.get_MAX_PARTICIPANT());
-		Button button = new Button("Dolacz");
-		button.addClickListener(c -> userFacade.assingUserToLecture(element.getId()));
-		layout.addComponents(speaker, remainingSeats, button);
+		layout.addComponents(speaker, remainingSeats);
 	}
 
 }

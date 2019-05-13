@@ -5,9 +5,11 @@ import java.util.List;
 
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
 
 @Entity
 class User {
@@ -18,8 +20,8 @@ class User {
 	
 	private String login;
 	private String email;
-	
-	@ElementCollection
+
+	@ElementCollection(targetClass = Long.class, fetch = FetchType.EAGER)
 	private List<Long> lectures;
 	
 	User(){}
@@ -54,6 +56,11 @@ class User {
 	
 	List<Long> getLectures(){
 		return lectures;
+	}
+
+	public boolean addLecture(long lectureId) {
+		return this.lectures.add(lectureId);
+		
 	}
 	
 	

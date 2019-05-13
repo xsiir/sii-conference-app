@@ -1,5 +1,7 @@
 package org.sienkiewicz.conferenceapp.user;
 
+import java.util.List;
+
 import org.springframework.stereotype.Component;
 
 @Component
@@ -8,6 +10,7 @@ class LoggedUser {
 	private Long id;
 	private String login;
 	private String email;
+	private List<Long> lectures;
 	
 	Long getId() {
 		return id;
@@ -30,6 +33,14 @@ class LoggedUser {
 	
 	LoggedUser getLoggedUser() {
 		return this;
+	}
+	
+	void setLectures(List<Long> lectures) {
+		this.lectures = lectures;
+	}
+	
+	List<Long> getLectures(){
+		return this.lectures;
 	}
 	
 	

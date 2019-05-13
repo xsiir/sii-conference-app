@@ -3,6 +3,7 @@ package org.sienkiewicz.conferenceapp.UI;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.sienkiewicz.conferenceapp.scheduler.Lecture;
 import org.sienkiewicz.conferenceapp.scheduler.PlanElement;
 import org.sienkiewicz.conferenceapp.scheduler.SchedulerFacade;
 import org.sienkiewicz.conferenceapp.scheduler.ThematicPath;
@@ -14,11 +15,14 @@ import com.vaadin.server.VaadinRequest;
 import com.vaadin.spring.annotation.SpringUI;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.Component;
+import com.vaadin.ui.Grid;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
+import com.vaadin.ui.Notification;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
+import com.vaadin.ui.renderers.ButtonRenderer;
 
 @SpringUI
 @Theme("valo")
@@ -44,7 +48,9 @@ public class ConferenceUI extends UI {
 	@Override
 	protected void init(VaadinRequest request) {
 		setupLayout();
-		addLoginForm();
+		userFacade.testRegister();
+		displayHeadernForm();
+		printLecturesIfLogged();
 		displayDaySchedule(_FIRST_DAY);
 		displayDaySchedule(_SECOND_DAY);
 	}
@@ -52,18 +58,57 @@ public class ConferenceUI extends UI {
 	private void setupLayout() {
 		root = new VerticalLayout();
 		setContent(root);
+	}
+	
+	private void printLecturesIfLogged() {
+		if(userFacade.isLogged()) {
+			Label label = new Label("Twoje wyklady na ktore jestes zapisany to: ");
+			List<Lecture> lectures = userFacade.getLoggedUserLectures();
+			Grid<Lecture> grid = new Grid<>();
+			grid.setItems(lectures);
+			grid.addColumn(Lecture::getTitle).setCaption("Nazwa");
+			grid.addColumn(Lecture::getSpeaker).setCaption("Speaker");
+			grid.addColumn(Lecture::getOcuppiedSeats).setCaption("Miejsca");
+			grid.addColumn(lecture -> "Wypisz!", 
+					new ButtonRenderer<>(click -> {
+						Notification.show("JUZ NIE BEDZIESZ NA PRZYJECIU O ID " + click.getItem().getId());
+					}));
+			root.addComponents(label, grid);
+
+		}
+	}
+
+	private void displayHeadernForm() {
+		HorizontalLayout formLayout = new HorizontalLayout();
+		
+		if(!userFacade.isLogged()) {
+			TextField textField = new TextField("Wprowadz swoj login...");
+			Button confirmButton = new Button("Zaloguj");
+			confirmButton.addClickListener(c -> {
+				userFacade.login(textField.getValue());
+				update();
+			});
+			formLayout.addComponents(textField, confirmButton);
+		}else {
+			Button confirmButton = new Button("Wyloguj");
+			confirmButton.addClickListener(c -> {
+				userFacade.logout();
+				update();
+			});
+			formLayout.addComponent(confirmButton);
+		}
+	
+		root.addComponent(formLayout);
+		
 		
 	}
 
-	private void addLoginForm() {
-		HorizontalLayout formLayout = new HorizontalLayout();
-		TextField textField = new TextField("");
-		Button confirmButton = new Button("Confirm");
-		confirmButton.addClickListener(c -> userFacade.login(textField.getValue()));
-		formLayout.addComponents(textField, confirmButton);
-
-		root.addComponent(formLayout);
-		
+	private void update() {
+		root.removeAllComponents();
+		displayHeadernForm();
+		printLecturesIfLogged();
+		displayDaySchedule(_FIRST_DAY);
+		displayDaySchedule(_SECOND_DAY);
 		
 	}
 
@@ -76,9 +121,19 @@ public class ConferenceUI extends UI {
 		for(ThematicPath path : paths) {
 			//...create a column...
 			VerticalLayout columnLayout = new VerticalLayout();
-			//...and display schedule of this path
+			//...and for every plan element in this path
 			for(PlanElement element : path.getPlanOfTheDay()) {
-				columnLayout.addComponent(recordTile.getTile(element));
+				//...create tile with details...
+				VerticalLayout tile = recordTile.getTile(element);
+				//...and add join button...
+				Button button = new Button("Dolacz");
+				//.. which will assign user to lecture and update page
+				button.addClickListener(c -> {
+					userFacade.assingUserToLecture(element.getId());
+					update();
+					});
+				tile.addComponent(button);
+				columnLayout.addComponent(tile);
 			}
 			tableLayout.addComponent(columnLayout);
 		}

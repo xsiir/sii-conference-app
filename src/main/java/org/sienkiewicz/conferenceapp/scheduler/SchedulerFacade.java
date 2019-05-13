@@ -2,20 +2,22 @@ package org.sienkiewicz.conferenceapp.scheduler;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class SchedulerFacade {
 	
-	private final SchedulerRepository schedulerRepositorium;
 	private final SchedulerService schedulerService;
 	
-	SchedulerFacade(SchedulerRepository schedulerRepositorium, SchedulerService schedulerService) {
+	SchedulerFacade(SchedulerService schedulerService) {
 		super();
-		this.schedulerRepositorium = schedulerRepositorium;
 		this.schedulerService = schedulerService;
+	}
+	
+	public Optional<Lecture> getLectureById(Long id) {
+		return schedulerService.getLectureById(id);
 	}
 
 	public boolean assignParticipantToLecture(Long userId, Long lectureId) {
