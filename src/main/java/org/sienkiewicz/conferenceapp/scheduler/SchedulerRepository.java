@@ -10,9 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.sienkiewicz.conferenceapp.scheduler.Lecture;
-import org.sienkiewicz.conferenceapp.scheduler.PlanElement;
-import org.sienkiewicz.conferenceapp.scheduler.ThematicPath;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -70,8 +67,8 @@ class SchedulerRepository {
 		//GENERATE FIRST PATH PLAN
 		planDetails = scheduler.get(firstDay).get(0).getPlanOfTheDay();
 		planDetails.add(new Lecture(0L, LocalTime.of(10, 00), Duration.ofHours(1).plus(Duration.ofMinutes(45)), "JVM Internals", "Jakub Kubryński"));
-		planDetails.add(new Break(getPreviousEndTime(), Duration.ofMinutes(15), "Coffee Break"));
-		planDetails.add(new Lecture(1L, getPreviousEndTime(), Duration.ofHours(1).plus(Duration.ofMinutes(45)), "Modularity and hexagonal architecture", "Jakub Nabrdalik"));
+		planDetails.add(new Break(getEndTimeOfPreviousPlanElement(), Duration.ofMinutes(15), "Coffee Break"));
+		planDetails.add(new Lecture(1L, getEndTimeOfPreviousPlanElement(), Duration.ofHours(1).plus(Duration.ofMinutes(45)), "Modularity and hexagonal architecture", "Jakub Nabrdalik"));
 
 		scheduler.get(firstDay).get(0).replacePlan(planDetails);
 		
@@ -79,16 +76,16 @@ class SchedulerRepository {
 		
 		planDetails = scheduler.get(firstDay).get(1).getPlanOfTheDay();
 		planDetails.add(new Lecture(2L, LocalTime.of(10, 00), Duration.ofHours(1).plus(Duration.ofMinutes(45)), "REACT na co dzień", "Jan Kowalski"));
-		planDetails.add(new Break(getPreviousEndTime(), Duration.ofMinutes(15), "Coffee  Break"));
-		planDetails.add(new Lecture(3L, getPreviousEndTime(), Duration.ofHours(1).plus(Duration.ofMinutes(45)), "ANGULAR - ciekawostki", "Tomasz Nowak"));
+		planDetails.add(new Break(getEndTimeOfPreviousPlanElement(), Duration.ofMinutes(15), "Coffee  Break"));
+		planDetails.add(new Lecture(3L, getEndTimeOfPreviousPlanElement(), Duration.ofHours(1).plus(Duration.ofMinutes(45)), "ANGULAR - ciekawostki", "Tomasz Nowak"));
 		
 		scheduler.get(firstDay).get(1).replacePlan(planDetails);
 
 		//GENERATE THIRD PATH PLAN
 		planDetails = scheduler.get(firstDay).get(2).getPlanOfTheDay();
 		planDetails.add(new Lecture(4L, LocalTime.of(10, 00), Duration.ofHours(1).plus(Duration.ofMinutes(45)), "MongoDB", "Wojciech Kowalczyk"));
-		planDetails.add(new Break(getPreviousEndTime(), Duration.ofMinutes(15), "Coffee Break"));
-		planDetails.add(new Lecture(5L, getPreviousEndTime(), Duration.ofHours(1).plus(Duration.ofMinutes(45)), "MySQL", "Zbigniew Lewandowski"));
+		planDetails.add(new Break(getEndTimeOfPreviousPlanElement(), Duration.ofMinutes(15), "Coffee Break"));
+		planDetails.add(new Lecture(5L, getEndTimeOfPreviousPlanElement(), Duration.ofHours(1).plus(Duration.ofMinutes(45)), "MySQL", "Zbigniew Lewandowski"));
 
 		scheduler.get(firstDay).get(2).replacePlan(planDetails);
 	}
@@ -107,8 +104,8 @@ class SchedulerRepository {
 		//GENERATE FIRST PATH PLAN
 		List<PlanElement> planDetails = scheduler.get(secondDay).get(0).getPlanOfTheDay();
 		planDetails.add(new Lecture(6L, LocalTime.of(10, 00), Duration.ofHours(1).plus(Duration.ofMinutes(45)), "JVM Internals", "Jakub Kubryński"));
-		planDetails.add(new Break(getPreviousEndTime(), Duration.ofMinutes(15), "Coffee Break"));
-		planDetails.add(new Lecture(7L, getPreviousEndTime(), Duration.ofHours(1).plus(Duration.ofMinutes(45)), "Modularity and hexagonal architecture", "Jakub Nabrdalik"));
+		planDetails.add(new Break(getEndTimeOfPreviousPlanElement(), Duration.ofMinutes(15), "Coffee Break"));
+		planDetails.add(new Lecture(7L, getEndTimeOfPreviousPlanElement(), Duration.ofHours(1).plus(Duration.ofMinutes(45)), "Modularity and hexagonal architecture", "Jakub Nabrdalik"));
 
 		scheduler.get(secondDay).get(0).replacePlan(planDetails);
 				
@@ -116,25 +113,25 @@ class SchedulerRepository {
 				
 		planDetails = scheduler.get(secondDay).get(1).getPlanOfTheDay();
 		planDetails.add(new Lecture(8L, LocalTime.of(10, 00), Duration.ofHours(1).plus(Duration.ofMinutes(45)), "REACT na co dzień", "Jan Kowalski"));
-		planDetails.add(new Break(getPreviousEndTime(), Duration.ofMinutes(15), "Coffee Break"));
-		planDetails.add(new Lecture(9L, getPreviousEndTime(), Duration.ofHours(1).plus(Duration.ofMinutes(45)), "ANGULAR - ciekawostki", "Tomasz Nowak"));
+		planDetails.add(new Break(getEndTimeOfPreviousPlanElement(), Duration.ofMinutes(15), "Coffee Break"));
+		planDetails.add(new Lecture(9L, getEndTimeOfPreviousPlanElement(), Duration.ofHours(1).plus(Duration.ofMinutes(45)), "ANGULAR - ciekawostki", "Tomasz Nowak"));
 		
 		scheduler.get(secondDay).get(1).replacePlan(planDetails);
 
 		//GENERATE THIRD PATH PLAN
 		planDetails = scheduler.get(secondDay).get(2).getPlanOfTheDay();
 		planDetails.add(new Lecture(10L, LocalTime.of(10, 00), Duration.ofHours(1).plus(Duration.ofMinutes(45)), "MongoDB", "Wojciech Kowalczyk"));
-		planDetails.add(new Break(getPreviousEndTime(), Duration.ofMinutes(15), "Coffee Break"));
-		planDetails.add(new Lecture(11L, getPreviousEndTime(), Duration.ofHours(1).plus(Duration.ofMinutes(45)), "MySQL", "Zbigniew Lewandowski"));
+		planDetails.add(new Break(getEndTimeOfPreviousPlanElement(), Duration.ofMinutes(15), "Coffee Break"));
+		planDetails.add(new Lecture(11L, getEndTimeOfPreviousPlanElement(), Duration.ofHours(1).plus(Duration.ofMinutes(45)), "MySQL", "Zbigniew Lewandowski"));
 
 		scheduler.get(secondDay).get(2).replacePlan(planDetails);
 	}
 
-	public List<ThematicPath> getPathsBydate(LocalDate date) {
+	List<ThematicPath> getPathsBydate(LocalDate date) {
 		return scheduler.get(date);
 	}
 	
-	private LocalTime getPreviousEndTime() {
+	private LocalTime getEndTimeOfPreviousPlanElement() {
 		return planDetails.get(planDetails.size()-1).getEndTime();
 	}
 

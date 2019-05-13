@@ -7,13 +7,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class SchedulerService {
+class SchedulerService {
 
 	@Autowired
 	private SchedulerRepository schedulerRepository;
 	
-	public List<ThematicPath> getThematicPathByDate(LocalDate date) {
+	List<ThematicPath> getThematicPathByDate(LocalDate date) {
 		return schedulerRepository.getPathsBydate(date);
+	}
+	
+	boolean isAssingsParticipantToLectureSuccesful(Long userId, Long lectureId) {
+		boolean isSuccesful = schedulerRepository.getLectureById(lectureId).filter(u -> u.addNew(userId)).isPresent();
+		return isSuccesful;
 	}
 
 }

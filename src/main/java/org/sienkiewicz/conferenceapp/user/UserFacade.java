@@ -28,23 +28,7 @@ public class UserFacade {
 
 	public void login(String value) {
 		userService.login(value);
-		System.out.println("ZALOGOWANO: " + loggedUser.getLogin());
 	}
 	
-	public void saveNewOne() {
-		User user = new User("maciek", "moj@email.pl");
-		userRepository.save(user);
-		System.out.println("ZAPISANO XD");
-	}
-
-	public boolean checkIfLogged() {
-		boolean isLogged = loggedUser.getEmail() == null ? false : true;
-		return isLogged;
-	}
-	
-	public void logout() {
-		loggedUser = null;
-		System.out.println("WYLOGOWANO " + loggedUser.getLogin());
-	}
 
 }

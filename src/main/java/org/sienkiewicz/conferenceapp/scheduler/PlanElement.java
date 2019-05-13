@@ -4,9 +4,9 @@ import java.time.LocalTime;
 
 public interface PlanElement {
 	
-	String getTitle();
-	LocalTime getEndTime();
-	LocalTime getStartTime();
 	Long getId();
+	String getTitle();
+	LocalTime getStartTime();
+	LocalTime getEndTime();
 
 }

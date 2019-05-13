@@ -1,7 +1,6 @@
 package org.sienkiewicz.conferenceapp.scheduler;
 
 import java.time.Duration;
-import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;

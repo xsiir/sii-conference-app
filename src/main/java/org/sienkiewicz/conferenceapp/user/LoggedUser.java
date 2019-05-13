@@ -1,6 +1,5 @@
 package org.sienkiewicz.conferenceapp.user;
 
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 @Component

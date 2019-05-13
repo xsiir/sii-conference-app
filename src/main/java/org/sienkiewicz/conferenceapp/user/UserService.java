@@ -4,7 +4,6 @@ import java.util.Optional;
 
 import org.sienkiewicz.conferenceapp.scheduler.PlanElement;
 import org.sienkiewicz.conferenceapp.scheduler.SchedulerFacade;
-import org.sienkiewicz.conferenceapp.user.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
