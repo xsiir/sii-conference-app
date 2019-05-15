@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+import org.sienkiewicz.conferenceapp.mailsender.EmailSender;
 import org.sienkiewicz.conferenceapp.scheduler.Lecture;
 import org.sienkiewicz.conferenceapp.scheduler.SchedulerFacade;
 import org.sienkiewicz.conferenceapp.user.exceptions.AlreadyAssignedException;
@@ -23,13 +24,15 @@ class UserService {
 	private final UserRepository userRepository;
 	private final SchedulerFacade schedulerFacade;
 	private final LoggedUser loggedUser;
+	private final EmailSender emailSender;
 
 	@Autowired
-	UserService(UserRepository userRepository, SchedulerFacade schedulerFacade, LoggedUser loggedUser) {
+	UserService(UserRepository userRepository, SchedulerFacade schedulerFacade, LoggedUser loggedUser, EmailSender emailSender) {
 		super();
 		this.userRepository = userRepository;
 		this.schedulerFacade = schedulerFacade;
 		this.loggedUser = loggedUser;
+		this.emailSender = emailSender;
 	}
 
 	Optional<User> saveNewUser(User user) {
@@ -37,6 +40,11 @@ class UserService {
 		return savedUser;
 	}
 
+	/**
+	 * If user with given login exsist, set every field of loggedUser as user with given login from database,
+	 * otherwise do nothing
+	 * @param login login for searching user
+	 */
 	void login(String login) {
 		userRepository.findByLogin(login).ifPresent(u -> {
 			this.loggedUser.setId(u.getId());
@@ -51,12 +59,18 @@ class UserService {
 
 		List<Long> lectureIdList = loggedUser.getLectures();
 		lectureIdList.forEach(id -> {
-			schedulerFacade.getLectureById(id).ifPresent(lecture -> lectureList.add(lecture));
+			schedulerFacade.findLectureById(id).ifPresent(lecture -> lectureList.add(lecture));
 		});
 
 		return lectureList;
 	}
 
+	/**
+	 * Check if user is already assigned to lecture where he is trying assigne to
+	 * @param user sent user
+	 * @param lectureId id of lecture where user is trying to assigne to
+	 * @return Either.right true if user has not been assigned, Either.left  AlreadyAssignedException if has been.
+	 */
 	private Either<Exception, Boolean> isAlreadyAssinged(User user, Long lectureId) {
 		return user.getLectures()
 		.stream()
@@ -66,11 +80,22 @@ class UserService {
 		.orElse(Either.<Exception, Boolean>right(true));
 	}
 
-
-	boolean checkIfLoginAlreadyExsist(String login) {
+	/**
+	 * Check if given login already exist in database
+	 * @param login searched login
+	 * @return  true if has been, false if has not
+	 */
+	boolean checkIfLoginAlreadyExist(String login) {
 		return userRepository.findByLogin(login).isPresent();
 	}
 
+	/**
+	 * Check if login of sent user already exist in database and if it does
+	 * check email compatibility between sent detail and database record 
+	 * @param databaseUser record from data
+	 * @param user sent user
+	 * @return Either.right true if emails are correct, Either.left  NotCompatibleEmailAddressesException if not.
+	 */
 	Either<Exception, Boolean> checkEmailsCompatibility(Optional<User> databaseUser, User sentUser) {
 		return databaseUser.filter(exsistingUser -> exsistingUser.getEmail().equalsIgnoreCase(sentUser.getEmail()))
 				.map(sameEmail -> Either.<Exception, Boolean>right(true))
@@ -78,7 +103,7 @@ class UserService {
 	}
 
 	Either<Exception, Boolean> hasAvailableSeats(Long lectureId) {
-		return schedulerFacade.getLectureById(lectureId)
+		return schedulerFacade.findLectureById(lectureId)
 				.filter(lecture -> lecture.hasAvailableSeats())
 				.map(lecture -> Either.<Exception, Boolean>right(true))
 				.orElse(Either.<Exception, Boolean>left(new NoMoreSeatsLeftException(lectureId)));
@@ -87,7 +112,7 @@ class UserService {
 	public Either<Exception, Boolean> assignUserToLecture(User user, Long lectureId) {
 		Either<Exception, Boolean> validationResult = assigningValidate(user, lectureId);
 		validationResult.onRight(action -> {
-			if(checkIfLoginAlreadyExsist(user.getLogin())) {
+			if(checkIfLoginAlreadyExist(user.getLogin())) {
 				final User userToSave = user;
 				userRepository.save(userToSave);
 			}
@@ -98,9 +123,10 @@ class UserService {
 			
 			if(loggedUser.getLogin()!=null) {
 				loggedUser.setLectures(user.getLectures());
-			}
-			
+			}			
 		});
+		
+		validationResult.onRight(action -> emailSender.sendEmail(user.getEmail()));
 
 		return validationResult;
 	}
@@ -109,7 +135,7 @@ class UserService {
 		Either<Exception, Boolean> validationResult = Either.right(true);
 		validationResult = checkIfEmailPatternIsCorrect(user.getEmail());
 		if(validationResult.isLeft()) return validationResult;
-		if(checkIfLoginAlreadyExsist(user.getLogin())) {
+		if(checkIfLoginAlreadyExist(user.getLogin())) {
 			validationResult = checkEmailsCompatibility(userRepository.findByLogin(user.getLogin()), user);
 			if(validationResult.isLeft()) return validationResult;
 		}
@@ -171,8 +197,8 @@ class UserService {
 		Optional<User> optionalUser = userRepository.findById(user.getId());
 		List<Long> lectures = optionalUser.get().getLectures();
 		for(Long userLecture : lectures) {
-			if(schedulerFacade.getLectureById(userLecture).filter(lecture -> lecture.checkIfInTheSamTime(
-					schedulerFacade.getLectureById(lectureId))).isPresent()) {
+			if(schedulerFacade.findLectureById(userLecture).filter(lecture -> lecture.checkIfInTheSamTime(
+					schedulerFacade.findLectureById(lectureId))).isPresent()) {
 				return Either.left(new HasAnotherLectureInSameTimeException());
 			}
 		}

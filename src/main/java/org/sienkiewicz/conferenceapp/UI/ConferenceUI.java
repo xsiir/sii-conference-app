@@ -60,6 +60,16 @@ public class ConferenceUI extends UI {
 		setContent(root);
 	}
 
+	private void updateGUI() {
+		root.removeAllComponents();	
+		if(isLogged()) displayUserHeader();	
+		else displayGuestHeader();
+		
+		displayDaySchedule(_FIRST_DAY);
+		displayDaySchedule(_SECOND_DAY);
+	}
+	
+	
 	private void displayGuestHeader() {
 		HorizontalLayout loginFormLayout = new HorizontalLayout();
 		TextField loginTextField = new TextField("Enter your login...");
@@ -113,15 +123,6 @@ public class ConferenceUI extends UI {
 			root.addComponents(tableHeader, grid);
 	}
 
-	private void updateGUI() {
-		root.removeAllComponents();	
-		if(isLogged()) displayUserHeader();	
-		else displayGuestHeader();
-		
-		displayDaySchedule(_FIRST_DAY);
-		displayDaySchedule(_SECOND_DAY);
-	}
-
 	private void displayDaySchedule(LocalDate date) {
 		List<ThematicPath> paths = readScheduleOfDate(date);
 		Label day = new Label(date.toString());
@@ -148,6 +149,7 @@ public class ConferenceUI extends UI {
 						} else {
 							window.setLecture(element.getId());
 							UI.getCurrent().addWindow(window);
+							window.addCloseListener(e -> updateGUI());
 						}
 					});
 					tile.addComponent(button);

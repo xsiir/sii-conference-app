@@ -25,7 +25,6 @@ class Break implements PlanElement {
 	public Duration	 getDuration() {
 		return duration;
 	}
-
 	
 	public String getTitle() {
 		return title;

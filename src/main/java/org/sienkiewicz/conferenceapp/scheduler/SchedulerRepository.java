@@ -25,7 +25,10 @@ class SchedulerRepository {
 	SchedulerRepository() {
 		initializeScheduler();
 	}
-		
+	
+	/**
+	 * Hard coded initialization of two days schedule
+	 */
 	private void initializeScheduler() {
 		initializeFirstDay();
 		initializeSecondDay();	
@@ -36,7 +39,7 @@ class SchedulerRepository {
 	}
 	
 	/**
-	 * Method with is responsible for searching Lecture by given ID. 
+	 * Responsible for searching Lecture by given ID. 
 	 * 
 	 * @param lectureId id of searched lecture.
 	 * @return Optional of Lecture if has been found, or Optional.empty() if has not been found.
@@ -62,6 +65,9 @@ class SchedulerRepository {
 		return lecture;
 	}
 	
+	/**
+	 * Hard-coded initialization of first day
+	 */
 	private void initializeFirstDay() {
 		//ADD NEW DAY TO SCHEDULER
 		LocalDate firstDay = LocalDate.of(2019, 6, 1);
@@ -99,6 +105,9 @@ class SchedulerRepository {
 		scheduler.get(firstDay).get(2).replacePlan(planDetails);
 	}
 
+	/**
+	 * Hard-coded initialization of second day
+	 */
 	private void initializeSecondDay() {
 		//ADD SECOND DAY TO SCHEDULER
 		LocalDate secondDay = LocalDate.of(2019, 6, 2);
@@ -136,10 +145,21 @@ class SchedulerRepository {
 		scheduler.get(secondDay).get(2).replacePlan(planDetails);
 	}
 
+	
+	/**
+	 * Get thematic paths by given date
+	 * @param date LocalDate for searching paths
+	 * @return	list with thematic paths, returns null if date does not exist
+	 */
 	List<ThematicPath> getPathsBydate(LocalDate date) {
 		return scheduler.get(date);
 	}
 	
+	/**
+	 * 
+	 * @return 	end time of previous element in day schedule from running path, 
+	 * throws ArrayIndexOutOfBoundsException if is execute on first element of array
+	 */
 	private LocalTime getEndTimeOfPreviousPlanElement() {
 		return planDetails.get(planDetails.size()-1).getEndTime();
 	}

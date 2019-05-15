@@ -3,7 +3,7 @@ package org.sienkiewicz.conferenceapp.user.exceptions;
 public class HasAnotherLectureInSameTimeException extends Exception{
 	
 	public String toString() {
-		return "KURWO JESTES ZAPSIANY O TEJ GODZINIE, W LEB SIE JEBNIJ";
+		return "You are already assigned to another lecture in same time!";
 	}
 
 }

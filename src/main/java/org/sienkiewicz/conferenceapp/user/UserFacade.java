@@ -2,8 +2,10 @@ package org.sienkiewicz.conferenceapp.user;
 
 import java.util.List;
 
+import org.sienkiewicz.conferenceapp.mailsender.EmailSender;
 import org.sienkiewicz.conferenceapp.scheduler.Lecture;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.MailSender;
 import org.springframework.stereotype.Service;
 
 import io.vavr.control.Either;
@@ -21,8 +23,12 @@ public class UserFacade {
 		this.loggedUser = loggedUser;
 	}
 
-	public void login(String value) {
-		userService.login(value);
+	/**
+	 * Set every field for loggedUser as user with given login
+	 * @param value
+	 */
+	public void login(String login) {
+		userService.login(login);
 	}
 	
 	public boolean isLogged() {
@@ -63,5 +69,5 @@ public class UserFacade {
 	public String getLoggedUserLogin() {
 		return loggedUser.getLogin();
 	}
-
+	
 }
