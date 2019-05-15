@@ -65,7 +65,8 @@ public class TableRecord {
 		Lecture lecture = (Lecture) element;
 		Label speaker = new Label(lecture.getSpeaker());
 		Label remainingSeats = new Label(lecture.getOcuppiedSeats() + "/" + lecture.get_MAX_PARTICIPANT());
-		layout.addComponents(speaker, remainingSeats);
+		Label date = new Label(lecture.getDate().toString());
+		layout.addComponents(date, speaker, remainingSeats);
 	}
 
 }

@@ -3,6 +3,9 @@ package org.sienkiewicz.conferenceapp.UI;
 import java.time.LocalDate;
 import java.util.List;
 
+import javax.swing.Action;
+import javax.swing.WindowConstants;
+
 import org.sienkiewicz.conferenceapp.scheduler.Lecture;
 import org.sienkiewicz.conferenceapp.scheduler.PlanElement;
 import org.sienkiewicz.conferenceapp.scheduler.SchedulerFacade;
@@ -22,21 +25,27 @@ import com.vaadin.ui.Notification;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
+import com.vaadin.ui.Window;
 import com.vaadin.ui.renderers.ButtonRenderer;
+
+import io.vavr.control.Either;
 
 @SpringUI
 @Theme("valo")
 public class ConferenceUI extends UI {
-	
+
 	private final SchedulerFacade schedulerFacade;
 	private final UserFacade userFacade;
 	private final TableRecord recordTile;
-	
+
+	@Autowired
+	private UserDetailsWindow window;
+
 	private final LocalDate _FIRST_DAY = LocalDate.of(2019, 6, 1);
 	private final LocalDate _SECOND_DAY = LocalDate.of(2019, 6, 2);
-	
+
 	private VerticalLayout root;
-	
+
 	@Autowired
 	ConferenceUI(SchedulerFacade schedulerFacade, UserFacade userFacade, TableRecord recordTile) {
 		super();
@@ -59,9 +68,9 @@ public class ConferenceUI extends UI {
 		root = new VerticalLayout();
 		setContent(root);
 	}
-	
+
 	private void printLecturesIfLogged() {
-		if(userFacade.isLogged()) {
+		if (userFacade.isLogged()) {
 			Label label = new Label("Twoje wyklady na ktore jestes zapisany to: ");
 			List<Lecture> lectures = userFacade.getLoggedUserLectures();
 			Grid<Lecture> grid = new Grid<>();
@@ -69,10 +78,9 @@ public class ConferenceUI extends UI {
 			grid.addColumn(Lecture::getTitle).setCaption("Nazwa");
 			grid.addColumn(Lecture::getSpeaker).setCaption("Speaker");
 			grid.addColumn(Lecture::getOcuppiedSeats).setCaption("Miejsca");
-			grid.addColumn(lecture -> "Wypisz!", 
-					new ButtonRenderer<>(click -> {
-						Notification.show("JUZ NIE BEDZIESZ NA PRZYJECIU O ID " + click.getItem().getId());
-					}));
+			grid.addColumn(lecture -> "Wypisz!", new ButtonRenderer<>(click -> {
+				Notification.show("JUZ NIE BEDZIESZ NA PRZYJECIU O ID " + click.getItem().getId());
+			}));
 			root.addComponents(label, grid);
 
 		}
@@ -80,8 +88,8 @@ public class ConferenceUI extends UI {
 
 	private void displayHeadernForm() {
 		HorizontalLayout formLayout = new HorizontalLayout();
-		
-		if(!userFacade.isLogged()) {
+
+		if (!userFacade.isLogged()) {
 			TextField textField = new TextField("Wprowadz swoj login...");
 			Button confirmButton = new Button("Zaloguj");
 			confirmButton.addClickListener(c -> {
@@ -89,7 +97,7 @@ public class ConferenceUI extends UI {
 				update();
 			});
 			formLayout.addComponents(textField, confirmButton);
-		}else {
+		} else {
 			Button confirmButton = new Button("Wyloguj");
 			confirmButton.addClickListener(c -> {
 				userFacade.logout();
@@ -97,10 +105,9 @@ public class ConferenceUI extends UI {
 			});
 			formLayout.addComponent(confirmButton);
 		}
-	
+
 		root.addComponent(formLayout);
-		
-		
+
 	}
 
 	private void update() {
@@ -109,38 +116,47 @@ public class ConferenceUI extends UI {
 		printLecturesIfLogged();
 		displayDaySchedule(_FIRST_DAY);
 		displayDaySchedule(_SECOND_DAY);
-		
+
 	}
 
 	private void displayDaySchedule(LocalDate date) {
 		List<ThematicPath> paths = readScheduleOfDate(date);
 		Label day = new Label(date.toString());
 		HorizontalLayout tableLayout = new HorizontalLayout();
-		
-		//For every thematic path...
-		for(ThematicPath path : paths) {
-			//...create a column...
+
+		// For every thematic path...
+		for (ThematicPath path : paths) {
+			// ...create a column...
 			VerticalLayout columnLayout = new VerticalLayout();
-			//...and for every plan element in this path
-			for(PlanElement element : path.getPlanOfTheDay()) {
-				//...create tile with details...
+			// ...and for every plan element in this path
+			for (PlanElement element : path.getPlanOfTheDay()) {
+				// ...create tile with details...
 				VerticalLayout tile = recordTile.getTile(element);
-				//...and add join button...
-				Button button = new Button("Dolacz");
-				//.. which will assign user to lecture and update page
-				button.addClickListener(c -> {
-					userFacade.assingUserToLecture(element.getId());
-					update();
+				// ...and if it is a Lecture, add join button...
+				if (element instanceof Lecture) {
+					Button button = new Button("Dolacz");
+					// .. which will assign user to lecture and update page
+					button.addClickListener(c -> {
+						if (userFacade.isLogged()) {
+							Either<Exception, Boolean> either = userFacade.assingLoggedUserToLecture(element.getId());
+							either.onLeft(error -> Notification.show(error.toString()).setDelayMsec(2000));
+							either.onRight(action -> update());
+							update();
+						} else {
+							window.setLecture(element.getId());
+							UI.getCurrent().addWindow(window);
+						}
 					});
-				tile.addComponent(button);
+					tile.addComponent(button);
+				}
 				columnLayout.addComponent(tile);
 			}
 			tableLayout.addComponent(columnLayout);
 		}
 		root.addComponents(day, tableLayout);
 	}
-	
-	private List<ThematicPath> readScheduleOfDate(LocalDate date){
+
+	private List<ThematicPath> readScheduleOfDate(LocalDate date) {
 		return schedulerFacade.getThematicPathByDate(date);
 	}
 

@@ -1,6 +1,7 @@
 package org.sienkiewicz.conferenceapp.scheduler;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,6 +11,7 @@ public class Lecture implements PlanElement{
 	private final int _MAX_PARTICIPANT = 5;
 	
 	private Long id;
+	private LocalDate date;
 	private LocalTime startTime;
 	private LocalTime endTime;
 	private Duration duration;
@@ -17,9 +19,10 @@ public class Lecture implements PlanElement{
 	private String speaker;
 	private List<Long> participants;
 
-	Lecture(Long id, LocalTime time, Duration duration, String title, String speaker) {
+	Lecture(Long id, LocalDate date, LocalTime time, Duration duration, String title, String speaker) {
 		super();
 		this.id = id;
+		this.date = date;
 		this.startTime = time;
 		this.duration = duration;
 		this.title = title;
@@ -67,6 +70,14 @@ public class Lecture implements PlanElement{
 	public LocalTime getEndTime() {
 		return endTime;
 	}
+
+	public boolean hasAvailableSeats() {
+		System.out.println(get_MAX_PARTICIPANT() + " " + getOcuppiedSeats());
+		return get_MAX_PARTICIPANT() > getOcuppiedSeats();
+	}
 	
+	public LocalDate getDate() {
+		return date;
+	}	
 	
 }

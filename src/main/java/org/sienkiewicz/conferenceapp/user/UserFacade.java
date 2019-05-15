@@ -8,6 +8,8 @@ import org.sienkiewicz.conferenceapp.scheduler.Lecture;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import io.vavr.control.Either;
+
 @Service
 public class UserFacade {
 	
@@ -22,11 +24,6 @@ public class UserFacade {
 		super();
 		this.userService = userService;
 		this.loggedUser = loggedUser;
-	}
-
-	public void assingUserToLecture(Long id) {
-		Optional<User> user = userRepository.findByLogin(loggedUser.getLogin());
-		user.filter(u -> userService.assing(u, id));
 	}
 
 	public void login(String value) {
@@ -53,6 +50,14 @@ public class UserFacade {
 
 	public List<Lecture> getLoggedUserLectures() {
 		return userService.getLoggedUserLectures();
+	}
+
+	public Either<Exception, Boolean> assignNewUser(String login, String mail, Long lectureId) {
+		return userService.assignNotLoggedUser(login, mail, lectureId);		
+	}
+	
+	public Either<Exception, Boolean> assingLoggedUserToLecture(Long lectureId){
+		return userService.assignLoggedUser(lectureId);
 	}
 
 }
