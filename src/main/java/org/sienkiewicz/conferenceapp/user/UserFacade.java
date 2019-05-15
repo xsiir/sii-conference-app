@@ -1,8 +1,6 @@
 package org.sienkiewicz.conferenceapp.user;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.sienkiewicz.conferenceapp.scheduler.Lecture;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,9 +13,6 @@ public class UserFacade {
 	
 	private final UserService userService;
 	private LoggedUser loggedUser;
-	
-	@Autowired
-	private UserRepository userRepository;
 	
 	@Autowired
 	UserFacade(UserService userService, LoggedUser loggedUser) {
@@ -41,13 +36,6 @@ public class UserFacade {
 		this.loggedUser.setLectures(null);
 	}
 	
-	public void testRegister() {
-		if(!userRepository.findByLogin("maciek").isPresent()) {
-			User user = new User("maciek", "email@moj.pl");
-			userRepository.save(user);
-		}
-	}
-
 	public List<Lecture> getLoggedUserLectures() {
 		return userService.getLoggedUserLectures();
 	}
@@ -58,6 +46,18 @@ public class UserFacade {
 	
 	public Either<Exception, Boolean> assingLoggedUserToLecture(Long lectureId){
 		return userService.assignLoggedUser(lectureId);
+	}
+
+	public Either<Exception, Boolean> changeUserEmail(String mail) {
+		return userService.changeEmailAdress(mail);
+	}
+	
+	public String getLoggedUserEmail() {
+		return loggedUser.getEmail();
+	}
+	
+	public String getLoggedUserLogin() {
+		return loggedUser.getLogin();
 	}
 
 }

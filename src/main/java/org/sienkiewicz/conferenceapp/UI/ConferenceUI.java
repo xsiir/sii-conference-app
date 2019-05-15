@@ -34,16 +34,16 @@ import io.vavr.control.Either;
 @Theme("valo")
 public class ConferenceUI extends UI {
 
+	private final LocalDate _FIRST_DAY = LocalDate.of(2019, 6, 1);
+	private final LocalDate _SECOND_DAY = LocalDate.of(2019, 6, 2);
+	
 	private final SchedulerFacade schedulerFacade;
 	private final UserFacade userFacade;
 	private final TableRecord recordTile;
 
 	@Autowired
 	private UserDetailsWindow window;
-
-	private final LocalDate _FIRST_DAY = LocalDate.of(2019, 6, 1);
-	private final LocalDate _SECOND_DAY = LocalDate.of(2019, 6, 2);
-
+	
 	private VerticalLayout root;
 
 	@Autowired
@@ -57,7 +57,6 @@ public class ConferenceUI extends UI {
 	@Override
 	protected void init(VaadinRequest request) {
 		setupLayout();
-		userFacade.testRegister();
 		displayHeadernForm();
 		printLecturesIfLogged();
 		displayDaySchedule(_FIRST_DAY);
@@ -71,19 +70,35 @@ public class ConferenceUI extends UI {
 
 	private void printLecturesIfLogged() {
 		if (userFacade.isLogged()) {
-			Label label = new Label("Twoje wyklady na ktore jestes zapisany to: ");
+			Label tableHeader = new Label("Your lectures: ");
 			List<Lecture> lectures = userFacade.getLoggedUserLectures();
 			Grid<Lecture> grid = new Grid<>();
 			grid.setItems(lectures);
-			grid.addColumn(Lecture::getTitle).setCaption("Nazwa");
+			grid.addColumn(Lecture::getTitle).setCaption("Name");
 			grid.addColumn(Lecture::getSpeaker).setCaption("Speaker");
-			grid.addColumn(Lecture::getOcuppiedSeats).setCaption("Miejsca");
-			grid.addColumn(lecture -> "Wypisz!", new ButtonRenderer<>(click -> {
+			grid.addColumn(Lecture::getOcuppiedSeats).setCaption("Registered people");
+			grid.addColumn(lecture -> "Unassign!", new ButtonRenderer<>(click -> {
 				Notification.show("JUZ NIE BEDZIESZ NA PRZYJECIU O ID " + click.getItem().getId());
 			}));
-			root.addComponents(label, grid);
+			root.addComponents(tableHeader, grid);
 
 		}
+	}
+	
+	private void displayChangingEmailFormIfLoggeed() {
+		HorizontalLayout horizontalLayout = new HorizontalLayout();
+		Label welcomeLabel = new Label("Hi " + userFacade.getLoggedUserLogin() + " your adress email is: " + userFacade.getLoggedUserEmail()); 
+		TextField emailTextField = new TextField("Change your email adress");
+		Button confirmButton = new Button("Confirm");
+		confirmButton.addClickListener(click -> {
+			Either<Exception, Boolean> result = userFacade.changeUserEmail(emailTextField.getValue());
+			result.onRight(action -> update());
+			result.onLeft(error -> Notification.show(error.toString()).setDelayMsec(2000));
+		});
+		
+		horizontalLayout.addComponents(welcomeLabel, emailTextField, confirmButton);
+		root.addComponent(horizontalLayout);
+		
 	}
 
 	private void displayHeadernForm() {
@@ -112,6 +127,7 @@ public class ConferenceUI extends UI {
 
 	private void update() {
 		root.removeAllComponents();
+		displayChangingEmailFormIfLoggeed();
 		displayHeadernForm();
 		printLecturesIfLogged();
 		displayDaySchedule(_FIRST_DAY);

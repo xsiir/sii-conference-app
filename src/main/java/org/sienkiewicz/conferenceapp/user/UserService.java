@@ -121,7 +121,6 @@ class UserService {
 		
 		return validationResult;
 		
-
 	}
 
 	private Either<Exception, Boolean> checkIfEmailPatternIsCorrect(String email) {
@@ -142,7 +141,18 @@ class UserService {
 	public Either<Exception, Boolean> assignNotLoggedUser(String login, String mail, Long lectureId) {
 		User userToAssign = userRepository.findByLogin(login).orElse(new User(login, mail));
 		return assignUserToLecture(userToAssign, lectureId);
+	}
 
+	public Either<Exception, Boolean> changeEmailAdress(String email) {
+		Either<Exception, Boolean> validation = checkIfEmailPatternIsCorrect(email);
+		validation.onRight(action -> {
+			userRepository.findByLogin(this.loggedUser.getLogin()).ifPresent(user -> {
+				user.setEmail(email);
+				loggedUser.setEmail(email);
+			});
+		});
+		
+		return validation;
 	}
 
 

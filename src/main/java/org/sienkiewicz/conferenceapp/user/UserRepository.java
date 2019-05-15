@@ -10,8 +10,4 @@ public interface UserRepository extends JpaRepository<User, Long>{
 	
 	Optional<User> findByLogin(String login);
 	
-	@Modifying
-	@Query("update User u set u.email = ?2  where u.login = ?1")
-	void setUserEmailByLogin(String login, String email);
-	
 }
