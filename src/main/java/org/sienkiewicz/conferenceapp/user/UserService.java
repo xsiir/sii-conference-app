@@ -6,9 +6,9 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 
 import org.sienkiewicz.conferenceapp.scheduler.Lecture;
-import org.sienkiewicz.conferenceapp.scheduler.PlanElement;
 import org.sienkiewicz.conferenceapp.scheduler.SchedulerFacade;
 import org.sienkiewicz.conferenceapp.user.exceptions.AlreadyAssignedException;
+import org.sienkiewicz.conferenceapp.user.exceptions.HasAnotherLectureInSameTimeException;
 import org.sienkiewicz.conferenceapp.user.exceptions.NoMoreSeatsLeftException;
 import org.sienkiewicz.conferenceapp.user.exceptions.NotCompatibleEmailAddressesException;
 import org.sienkiewicz.conferenceapp.user.exceptions.NotEmailException;
@@ -16,7 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import io.vavr.control.Either;
-import io.vavr.control.Option;
 
 @Service
 class UserService {
@@ -116,6 +115,8 @@ class UserService {
 		}
 		validationResult = isAlreadyAssinged(user, lectureId);
 		if(validationResult.isLeft()) return validationResult;
+		validationResult = checkIfIsAlreadyAssignToOtherLectureInSameTime(user, lectureId);
+		if(validationResult.isLeft()) return validationResult;
 		validationResult = hasAvailableSeats(lectureId);
 		if(validationResult.isLeft()) return validationResult;
 		
@@ -140,6 +141,7 @@ class UserService {
 
 	public Either<Exception, Boolean> assignNotLoggedUser(String login, String mail, Long lectureId) {
 		User userToAssign = userRepository.findByLogin(login).orElse(new User(login, mail));
+		userRepository.save(userToAssign);
 		return assignUserToLecture(userToAssign, lectureId);
 	}
 
@@ -153,6 +155,28 @@ class UserService {
 		});
 		
 		return validation;
+	}
+
+	public void unassign(Long lectureId) {
+		Optional<User> user = userRepository.findById(this.loggedUser.getId());
+		user.map(usr -> usr.getLectures())
+				.map(listOfLecture -> listOfLecture.removeIf(index -> index.equals(lectureId)));
+		user.ifPresent(usr -> userRepository.save(usr));
+		login(this.loggedUser.getLogin());
+		schedulerFacade.unassingPartizipantFromLecture(this.loggedUser.getId(), lectureId);
+		
+	}
+	
+	private Either<Exception, Boolean> checkIfIsAlreadyAssignToOtherLectureInSameTime(User user, Long lectureId){
+		Optional<User> optionalUser = userRepository.findById(user.getId());
+		List<Long> lectures = optionalUser.get().getLectures();
+		for(Long userLecture : lectures) {
+			if(schedulerFacade.getLectureById(userLecture).filter(lecture -> lecture.checkIfInTheSamTime(
+					schedulerFacade.getLectureById(lectureId))).isPresent()) {
+				return Either.left(new HasAnotherLectureInSameTimeException());
+			}
+		}
+		return Either.right(true);
 	}
 
 

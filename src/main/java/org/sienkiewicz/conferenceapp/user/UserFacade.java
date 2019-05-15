@@ -47,6 +47,10 @@ public class UserFacade {
 	public Either<Exception, Boolean> assingLoggedUserToLecture(Long lectureId){
 		return userService.assignLoggedUser(lectureId);
 	}
+	
+	public void unassing(Long lectureId){
+		userService.unassign(lectureId);
+	}
 
 	public Either<Exception, Boolean> changeUserEmail(String mail) {
 		return userService.changeEmailAdress(mail);

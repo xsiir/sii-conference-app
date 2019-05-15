@@ -35,11 +35,21 @@ class SchedulerRepository {
 		return this.scheduler;
 	}
 	
+	/**
+	 * Method with is responsible for searching Lecture by given ID. 
+	 * 
+	 * @param lectureId id of searched lecture.
+	 * @return Optional of Lecture if has been found, or Optional.empty() if has not been found.
+	 */
 	Optional<Lecture> getLectureById(Long lectureId) {
-		Optional<Lecture> lecture = Optional.ofNullable(null);
+		Optional<Lecture> lecture = Optional.empty();
+		
 		Collection<List<ThematicPath>> collectionOfDaySchedules = getSchedule().values();
+		//For every day...
 		for(List<ThematicPath> thematicPaths : collectionOfDaySchedules) {
+			//...and every single thematic path...
 			for(ThematicPath path : thematicPaths) {
+				//...check every element of plan if is lecture with given id
 				for(PlanElement planElement : path.getPlanOfTheDay()) {
 					if(planElement instanceof Lecture && ((Lecture) planElement).getId() == lectureId) {
 						lecture = Optional.of((Lecture) planElement);

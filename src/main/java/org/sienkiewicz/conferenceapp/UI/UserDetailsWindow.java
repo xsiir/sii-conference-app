@@ -5,7 +5,6 @@ import javax.annotation.PostConstruct;
 import org.sienkiewicz.conferenceapp.user.UserFacade;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.vaadin.server.FontAwesome;
 import com.vaadin.spring.annotation.SpringUI;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.Label;

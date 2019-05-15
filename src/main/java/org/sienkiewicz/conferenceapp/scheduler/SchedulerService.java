@@ -18,15 +18,18 @@ class SchedulerService {
 	}
 	
 	boolean isAssingsParticipantToLectureSuccesful(Long userId, Long lectureId) {
-		boolean isSuccesful = false;
-		if(getLectureById(lectureId).filter(lecture -> lecture.getOcuppiedSeats() < 5).isPresent()) {
-			isSuccesful = schedulerRepository.getLectureById(lectureId).filter(u -> u.addNew(userId)).isPresent();
-		}
-		return isSuccesful;
+			return schedulerRepository.getLectureById(lectureId).map(u -> u.addNew(userId)).orElse(false);
 	}
 
 	public Optional<Lecture> getLectureById(Long id) {
 		return schedulerRepository.getLectureById(id);
+	}
+
+	public void unassingPartizipantFromLecture(Long userId, Long lectureId) {
+		getLectureById(lectureId)
+			.map(lecture -> lecture.getParticipants())
+			.filter(singleLecture -> 
+				singleLecture.removeIf(index -> index.equals(userId)));
 	}
 
 }

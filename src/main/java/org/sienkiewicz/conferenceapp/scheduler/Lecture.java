@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class Lecture implements PlanElement{
 	
@@ -55,7 +56,7 @@ public class Lecture implements PlanElement{
 		return speaker;
 	}
 
-	List<Long> getParticipants() {
+	public List<Long> getParticipants() {
 		return participants;
 	}
 	
@@ -72,12 +73,19 @@ public class Lecture implements PlanElement{
 	}
 
 	public boolean hasAvailableSeats() {
-		System.out.println(get_MAX_PARTICIPANT() + " " + getOcuppiedSeats());
 		return get_MAX_PARTICIPANT() > getOcuppiedSeats();
 	}
 	
 	public LocalDate getDate() {
 		return date;
 	}	
+	
+	public boolean checkIfInTheSamTime(Optional<Lecture> lecture) {
+		return lecture.map(optionalLecture -> 
+				(this.getDate().isEqual(optionalLecture.getDate())) &&
+				(this.getStartTime().isBefore(optionalLecture.getEndTime()) && 
+				(this.getEndTime().isAfter(optionalLecture.getStartTime())) 
+				)).orElse(false);
+	}
 	
 }

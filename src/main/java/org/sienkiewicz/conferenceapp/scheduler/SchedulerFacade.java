@@ -24,13 +24,13 @@ public class SchedulerFacade {
 		return schedulerService.isAssingsParticipantToLectureSuccesful(userId, lectureId);
 	}
 
-	public boolean unassingPartizipantFromLecture(Long userId, Long lectureId) {
-		//TO-DO
-		return true;
+	public void unassingPartizipantFromLecture(Long userId, Long lectureId) {
+		schedulerService.unassingPartizipantFromLecture(userId, lectureId);
 	}
 	
 	public List<ThematicPath> getThematicPathByDate(LocalDate date){
 		return schedulerService.getThematicPathByDate(date);
 	}
+
 
 }

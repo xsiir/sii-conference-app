@@ -3,9 +3,6 @@ package org.sienkiewicz.conferenceapp.UI;
 import java.time.LocalDate;
 import java.util.List;
 
-import javax.swing.Action;
-import javax.swing.WindowConstants;
-
 import org.sienkiewicz.conferenceapp.scheduler.Lecture;
 import org.sienkiewicz.conferenceapp.scheduler.PlanElement;
 import org.sienkiewicz.conferenceapp.scheduler.SchedulerFacade;
@@ -17,7 +14,6 @@ import com.vaadin.annotations.Theme;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.spring.annotation.SpringUI;
 import com.vaadin.ui.Button;
-import com.vaadin.ui.Component;
 import com.vaadin.ui.Grid;
 import com.vaadin.ui.HorizontalLayout;
 import com.vaadin.ui.Label;
@@ -25,7 +21,6 @@ import com.vaadin.ui.Notification;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
-import com.vaadin.ui.Window;
 import com.vaadin.ui.renderers.ButtonRenderer;
 
 import io.vavr.control.Either;
@@ -36,31 +31,28 @@ public class ConferenceUI extends UI {
 
 	private final LocalDate _FIRST_DAY = LocalDate.of(2019, 6, 1);
 	private final LocalDate _SECOND_DAY = LocalDate.of(2019, 6, 2);
-	
+
 	private final SchedulerFacade schedulerFacade;
 	private final UserFacade userFacade;
 	private final TableRecord recordTile;
+	private final UserDetailsWindow window;
 
-	@Autowired
-	private UserDetailsWindow window;
-	
 	private VerticalLayout root;
 
 	@Autowired
-	ConferenceUI(SchedulerFacade schedulerFacade, UserFacade userFacade, TableRecord recordTile) {
+	ConferenceUI(SchedulerFacade schedulerFacade, UserFacade userFacade, TableRecord recordTile,
+			UserDetailsWindow window) {
 		super();
 		this.schedulerFacade = schedulerFacade;
 		this.userFacade = userFacade;
 		this.recordTile = recordTile;
+		this.window = window;
 	}
 
 	@Override
 	protected void init(VaadinRequest request) {
 		setupLayout();
-		displayHeadernForm();
-		printLecturesIfLogged();
-		displayDaySchedule(_FIRST_DAY);
-		displayDaySchedule(_SECOND_DAY);
+		updateGUI();
 	}
 
 	private void setupLayout() {
@@ -68,8 +60,45 @@ public class ConferenceUI extends UI {
 		setContent(root);
 	}
 
-	private void printLecturesIfLogged() {
-		if (userFacade.isLogged()) {
+	private void displayGuestHeader() {
+		HorizontalLayout loginFormLayout = new HorizontalLayout();
+		TextField loginTextField = new TextField("Enter your login...");
+		Button confirmButton = new Button("Login");
+		confirmButton.addClickListener(onClick -> {
+			userFacade.login(loginTextField.getValue());
+			updateGUI();
+		});
+		loginFormLayout.addComponents(loginTextField, confirmButton);
+		root.addComponent(loginFormLayout);
+	}
+
+	private void displayUserHeader() {
+		Label welcomeLabel = new Label(
+				"Hi " + userFacade.getLoggedUserLogin() + " your adress email is: " + userFacade.getLoggedUserEmail());
+
+		HorizontalLayout formLayout = new HorizontalLayout();
+
+		Button logoutButton = new Button("Logout");
+		logoutButton.addClickListener(click -> {
+			userFacade.logout();
+			updateGUI();
+		});
+
+		TextField emailTextField = new TextField("Change your email adress");
+		Button confirmChangeEmailButton = new Button("Confirm");
+		confirmChangeEmailButton.addClickListener(click -> {
+			Either<Exception, Boolean> result = userFacade.changeUserEmail(emailTextField.getValue());
+			result.onRight(action -> updateGUI());
+			result.onLeft(error -> Notification.show(error.toString()).setDelayMsec(2000));
+		});
+
+		formLayout.addComponents(logoutButton, emailTextField, confirmChangeEmailButton);
+		root.addComponents(welcomeLabel, formLayout);
+
+		printLecturesList();
+	}
+
+	private void printLecturesList() {
 			Label tableHeader = new Label("Your lectures: ");
 			List<Lecture> lectures = userFacade.getLoggedUserLectures();
 			Grid<Lecture> grid = new Grid<>();
@@ -78,61 +107,19 @@ public class ConferenceUI extends UI {
 			grid.addColumn(Lecture::getSpeaker).setCaption("Speaker");
 			grid.addColumn(Lecture::getOcuppiedSeats).setCaption("Registered people");
 			grid.addColumn(lecture -> "Unassign!", new ButtonRenderer<>(click -> {
-				Notification.show("JUZ NIE BEDZIESZ NA PRZYJECIU O ID " + click.getItem().getId());
+					userFacade.unassing(click.getItem().getId());
+					updateGUI();
 			}));
 			root.addComponents(tableHeader, grid);
-
-		}
 	}
-	
-	private void displayChangingEmailFormIfLoggeed() {
-		HorizontalLayout horizontalLayout = new HorizontalLayout();
-		Label welcomeLabel = new Label("Hi " + userFacade.getLoggedUserLogin() + " your adress email is: " + userFacade.getLoggedUserEmail()); 
-		TextField emailTextField = new TextField("Change your email adress");
-		Button confirmButton = new Button("Confirm");
-		confirmButton.addClickListener(click -> {
-			Either<Exception, Boolean> result = userFacade.changeUserEmail(emailTextField.getValue());
-			result.onRight(action -> update());
-			result.onLeft(error -> Notification.show(error.toString()).setDelayMsec(2000));
-		});
+
+	private void updateGUI() {
+		root.removeAllComponents();	
+		if(isLogged()) displayUserHeader();	
+		else displayGuestHeader();
 		
-		horizontalLayout.addComponents(welcomeLabel, emailTextField, confirmButton);
-		root.addComponent(horizontalLayout);
-		
-	}
-
-	private void displayHeadernForm() {
-		HorizontalLayout formLayout = new HorizontalLayout();
-
-		if (!userFacade.isLogged()) {
-			TextField textField = new TextField("Wprowadz swoj login...");
-			Button confirmButton = new Button("Zaloguj");
-			confirmButton.addClickListener(c -> {
-				userFacade.login(textField.getValue());
-				update();
-			});
-			formLayout.addComponents(textField, confirmButton);
-		} else {
-			Button confirmButton = new Button("Wyloguj");
-			confirmButton.addClickListener(c -> {
-				userFacade.logout();
-				update();
-			});
-			formLayout.addComponent(confirmButton);
-		}
-
-		root.addComponent(formLayout);
-
-	}
-
-	private void update() {
-		root.removeAllComponents();
-		displayChangingEmailFormIfLoggeed();
-		displayHeadernForm();
-		printLecturesIfLogged();
 		displayDaySchedule(_FIRST_DAY);
 		displayDaySchedule(_SECOND_DAY);
-
 	}
 
 	private void displayDaySchedule(LocalDate date) {
@@ -156,8 +143,8 @@ public class ConferenceUI extends UI {
 						if (userFacade.isLogged()) {
 							Either<Exception, Boolean> either = userFacade.assingLoggedUserToLecture(element.getId());
 							either.onLeft(error -> Notification.show(error.toString()).setDelayMsec(2000));
-							either.onRight(action -> update());
-							update();
+							either.onRight(action -> updateGUI());
+							updateGUI();
 						} else {
 							window.setLecture(element.getId());
 							UI.getCurrent().addWindow(window);
@@ -174,6 +161,10 @@ public class ConferenceUI extends UI {
 
 	private List<ThematicPath> readScheduleOfDate(LocalDate date) {
 		return schedulerFacade.getThematicPathByDate(date);
+	}
+	
+	private boolean isLogged() {
+		return userFacade.isLogged();
 	}
 
 }
