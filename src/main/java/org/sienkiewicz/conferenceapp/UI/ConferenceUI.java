@@ -83,8 +83,10 @@ public class ConferenceUI extends UI {
 	}
 
 	private void displayUserHeader() {
+		String loggedUserLogin = userFacade.getLoggedUserLogin().orElse(" unknown ");
+		String loggedUserEmail = userFacade.getLoggedUserEmail().orElse("unknown");
 		Label welcomeLabel = new Label(
-				"Hi " + userFacade.getLoggedUserLogin() + " your adress email is: " + userFacade.getLoggedUserEmail());
+				"Hi " + loggedUserLogin + " your adress email is: " + loggedUserEmail);
 
 		HorizontalLayout formLayout = new HorizontalLayout();
 

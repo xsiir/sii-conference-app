@@ -54,6 +54,10 @@ class UserService {
 		});
 	}
 
+	/**
+	 * Get all lectures of logged user, if user is not logged in then return null
+	 * @return  lecture's list of logged user, if user is not logged in then return null
+	 */
 	List<Lecture> getLoggedUserLectures() {
 		List<Lecture> lectureList = new ArrayList<>();
 
@@ -102,6 +106,12 @@ class UserService {
 				.orElse(Either.left(new NotCompatibleEmailAddressesException(sentUser.getLogin())));
 	}
 
+	/**
+	 * Check if lecture has available seats yet
+	 * @param lectureId checked lecture
+	 * @return Either.right true if lecture has available  seats, 
+	 * otherwise Either.left NoMoreSeatsLeftException
+	 */
 	Either<Exception, Boolean> hasAvailableSeats(Long lectureId) {
 		return schedulerFacade.findLectureById(lectureId)
 				.filter(lecture -> lecture.hasAvailableSeats())
@@ -109,6 +119,12 @@ class UserService {
 				.orElse(Either.<Exception, Boolean>left(new NoMoreSeatsLeftException(lectureId)));
 	}
 
+	/**
+	 *  Try to assign user to lecture
+	 * @param user user who will be assigned to lecture
+	 * @param lectureId id of lecture where user will be assigned to
+	 * @return	Either.right true if assigned ends successfully, otherwise Either.left Exception
+	 */
 	public Either<Exception, Boolean> assignUserToLecture(User user, Long lectureId) {
 		Either<Exception, Boolean> validationResult = assigningValidate(user, lectureId);
 		validationResult.onRight(action -> {
@@ -131,6 +147,12 @@ class UserService {
 		return validationResult;
 	}
 
+	/**
+	 * Check if user can be assigned to lecture 
+	 * @param user user who will be assigned to lecture
+	 * @param lectureId id of lecture where user will be assgined to
+	 * @return Either.right true if user can be assigned, otherwise Either.left Exception with more details.
+	 */
 	private Either<Exception, Boolean>  assigningValidate(User user, Long lectureId){
 		Either<Exception, Boolean> validationResult = Either.right(true);
 		validationResult = checkIfEmailPatternIsCorrect(user.getEmail());
@@ -141,7 +163,7 @@ class UserService {
 		}
 		validationResult = isAlreadyAssinged(user, lectureId);
 		if(validationResult.isLeft()) return validationResult;
-		validationResult = checkIfIsAlreadyAssignToOtherLectureInSameTime(user, lectureId);
+		validationResult = hasNoAnotherLectureInSameTime(user, lectureId);
 		if(validationResult.isLeft()) return validationResult;
 		validationResult = hasAvailableSeats(lectureId);
 		if(validationResult.isLeft()) return validationResult;
@@ -150,6 +172,12 @@ class UserService {
 		
 	}
 
+	
+	/**
+	 * Check if sent email has correct pattern
+	 * @param email email to check
+	 * @return Either.right true if pattern is correct, otherwise Either.left NotEmailException
+	 */
 	private Either<Exception, Boolean> checkIfEmailPatternIsCorrect(String email) {
 		String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\." + "[a-zA-Z0-9_+&*-]+)*@" + "(?:[a-zA-Z0-9-]+\\.)+[a-z"
 				+ "A-Z]{2,7}$";
@@ -159,18 +187,33 @@ class UserService {
 				: Either.<Exception, Boolean>left(new NotEmailException(email));
 	}
 	
+	/**
+	 * Execute assignUserToLecture() for loggedUser
+	 * @param lectureId lecture id where logged user will be assigned to
+	 * @return  Either.right true if operation ends successfully, otherwise Either.left Exception
+	 */
 	public Either<Exception, Boolean> assignLoggedUser(Long lectureId) {
 		return userRepository.findByLogin(this.loggedUser.getLogin())
 				.map(user -> assignUserToLecture(user, lectureId))
 				.orElse(Either.left(new Exception("SOMETHING GONE WRONG")));
 	}
 
+	/**
+	 * Save new user to repository and execute assignUserToLecture()
+	 * @param lectureId lecture id where logged user will be assigned to
+	 * @return  Either<Exception, Boolean> as result of assignUserToLecture()
+	 */
 	public Either<Exception, Boolean> assignNotLoggedUser(String login, String mail, Long lectureId) {
 		User userToAssign = userRepository.findByLogin(login).orElse(new User(login, mail));
 		userRepository.save(userToAssign);
 		return assignUserToLecture(userToAssign, lectureId);
 	}
 
+	/**
+	 * Change email of logged user
+	 * @param email new user's email
+	 * @return Either.right true if email has been changed, otherwise Either.left NotEmailException
+	 */
 	public Either<Exception, Boolean> changeEmailAdress(String email) {
 		Either<Exception, Boolean> validation = checkIfEmailPatternIsCorrect(email);
 		validation.onRight(action -> {
@@ -183,6 +226,10 @@ class UserService {
 		return validation;
 	}
 
+	/**
+	 * Remove lecture id from logged user lectures list, then remove user id from lecture's paricipant's list
+	 * @param lectureId lecture which will be removed
+	 */
 	public void unassign(Long lectureId) {
 		Optional<User> user = userRepository.findById(this.loggedUser.getId());
 		user.map(usr -> usr.getLectures())
@@ -193,7 +240,13 @@ class UserService {
 		
 	}
 	
-	private Either<Exception, Boolean> checkIfIsAlreadyAssignToOtherLectureInSameTime(User user, Long lectureId){
+	/**
+	 * Check if user is assigned to another lecture in same tame as he trying to assign to
+	 * @param user user who is trying to assign
+	 * @param lectureId lecture id where user is trying to assign to
+	 * @return Either.right true if user has no another lecture in same time, otherwise Either.left HasAnotherLectureInSameTimeException
+	 */
+	private Either<Exception, Boolean> hasNoAnotherLectureInSameTime(User user, Long lectureId){
 		Optional<User> optionalUser = userRepository.findById(user.getId());
 		List<Long> lectures = optionalUser.get().getLectures();
 		for(Long userLecture : lectures) {

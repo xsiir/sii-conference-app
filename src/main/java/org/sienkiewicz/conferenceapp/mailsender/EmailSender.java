@@ -15,7 +15,7 @@ public class EmailSender {
 	private JavaMailSender mailSender;
 	
 	private final String _TITLE = "Sii Internship 2019";
-	private final String _MESSAGE = "YOU'VE SUCCESFULY ASSIGNED TO LECTURE! SEE U!";
+	private final String _MESSAGE = "YOU'VE SUCCESSFULLY ASSIGNED TO LECTURE! SEE U!";
 	
 	/**
 	 *  Send email to assigned user. 
